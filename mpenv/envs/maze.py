@@ -139,20 +139,87 @@ class MazeGoal(Base):
         self.ax = ax
 
 
+class MazeGoalDistanceCurriculum(MazeGoal):
+    def __init__(self, grid_size, curriculum_difficulty):
+        super().__init__(grid_size)
+
+        self.difficulty = curriculum_difficulty
+        self.MAX_STRAIGHT_PATH_LENGTH = 100
+
+    def validate_sample(self, state, goal_state):
+        "Filter start and goal with straight path solution"
+        straight_path = self.model_wrapper.arange(
+            state, goal_state, self.delta_collision_check
+        )
+
+        if len(straight_path) > min(self.difficulty + 0.25, 1.0) * self.MAX_STRAIGHT_PATH_LENGTH:
+            return False
+
+        # Allow straight path solutions for the easiest levels of difficulty.
+        if self.difficulty > 0.25:
+            _, collide = self.stopping_configuration(straight_path)
+            return collide.any()
+
+
+class MazeGoalObstaclesCurriculum(MazeGoal):
+    def __init__(self, grid_size, curriculum_difficulty):
+        super().__init__(grid_size)
+
+        self.difficulty = curriculum_difficulty
+        self.HARD_MAX_OBSTACLES = grid_size ** 2.0
+        self.MAX_OBSTACLES = int(self.difficulty * self.HARD_MAX_OBSTACLES)
+
+
+    def validate_sample(self, state, goal_state):
+        "Filter start and goal with straight path solution"
+        # Allow straight path solutions for the easiest levels of difficulty.
+        if self.difficulty < 0.25:
+            return True
+
+        straight_path = self.model_wrapper.arange(
+            state, goal_state, self.delta_collision_check
+        )
+
+        _, collide = self.stopping_configuration(straight_path)
+        return collide.any()
+
+
+    def get_obstacles_geoms(self, idx_env):
+        np_random = self._np_random
+        self.maze = Maze(self.grid_size, self.grid_size)
+        self.maze.make_maze()
+        geom_objs = extract_obstacles(self.maze, self.thickness)
+        geoms = Geometries(geom_objs)
+
+        # Truncating obstacles to maximum depending on the curriculum difficulty.
+        # We need to keep the at least (4 * grid_size) walls surrounding the whole maze.
+        geoms.geom_objs = geoms.geom_objs[:4 * self.grid_size + self.MAX_OBSTACLES]
+        return geoms, idx_env
+
+
 def extract_obstacles(maze, thickness):
     scx = 1 / maze.nx
     scy = 1 / maze.ny
 
     obstacles_coord = []
+    # Draw top and left walls.
     for x in range(maze.nx):
         obstacles_coord.append((x / maze.nx, 0, (x + 1) / maze.nx, 0))
     for y in range(maze.ny):
         obstacles_coord.append((0, y / maze.ny, 0, (y + 1) / maze.ny))
+
+    # Draw right and bottom walls.
+    for x in range(maze.nx):
+        obstacles_coord.append((x / maze.nx, 1.0, (x + 1) / maze.nx, 1.0))
+    for y in range(maze.ny):
+        obstacles_coord.append((1.0, y / maze.ny, 1.0, (y + 1) / maze.ny))
+
     # Draw the "South" and "East" walls of each cell, if present (these
     # are the "North" and "West" walls of a neighbouring cell in
     # general, of course).
-    for x in range(maze.nx):
-        for y in range(maze.ny):
+    # We ignore last row & last column of cells since the right & bottom walls have already been drawn.
+    for x in range(maze.nx - 1):
+        for y in range(maze.ny - 1):
             if maze.cell_at(x, y).walls["S"]:
                 x1, y1, x2, y2 = (
                     x * scx,
@@ -192,6 +259,22 @@ def extract_obstacles(maze, thickness):
 
 def maze_edges(grid_size):
     env = MazeGoal(grid_size)
+    env = MazeObserver(env)
+    coordinate_frame = "local"
+    env = RobotLinksObserver(env, coordinate_frame)
+    return env
+
+
+def maze_edges_distance_curriculum(grid_size, curriculum_difficulty):
+    env = MazeGoalDistanceCurriculum(grid_size, curriculum_difficulty)
+    env = MazeObserver(env)
+    coordinate_frame = "local"
+    env = RobotLinksObserver(env, coordinate_frame)
+    return env
+
+
+def maze_edges_obstacles_curriculum(grid_size, curriculum_difficulty):
+    env = MazeGoalObstaclesCurriculum(grid_size, curriculum_difficulty)
     env = MazeObserver(env)
     coordinate_frame = "local"
     env = RobotLinksObserver(env, coordinate_frame)
