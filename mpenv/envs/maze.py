@@ -144,21 +144,48 @@ class MazeGoalDistanceCurriculum(MazeGoal):
         super().__init__(grid_size)
 
         self.difficulty = curriculum_difficulty
-        self.MAX_STRAIGHT_PATH_LENGTH = 100
+        self.MAX_PATH_LENGTH = max(self.difficulty * np.sqrt(2), 0.2)
+        self.MIN_PATH_LENGTH = max(self.difficulty / 2.0, 0.0) * np.sqrt(2)
+        print("Difficulty is: {diff}, max path length is: {max_path}, min path length is: {min_path}".format(
+            diff=self.difficulty,
+            max_path=self.MAX_PATH_LENGTH,
+            min_path=self.MIN_PATH_LENGTH
+        ))
 
     def validate_sample(self, state, goal_state):
         "Filter start and goal with straight path solution"
-        straight_path = self.model_wrapper.arange(
-            state, goal_state, self.delta_collision_check
-        )
+        """
+        success, path, _, _ = Base.solve_rrt(self, simplify=True, max_iterations=2000)
 
-        if len(straight_path) > min(self.difficulty + 0.25, 1.0) * self.MAX_STRAIGHT_PATH_LENGTH:
+        if success:
+            path_length = 0
+
+            start = path["points"][0].q[:2]
+            for point in path["points"][1:]:
+                end = point.q[:2]
+                path_length += np.sqrt(np.sum(np.power(start - end, 2.0)))
+                start = end
+
+            if path_length > self.MAX_PATH_LENGTH:
+                print("Rejected environment because path length was too big:")
+                print("\t{} > {}".format(path_length, min(self.difficulty + 0.25, 1.0) * self.MAX_PATH_LENGTH))
+                return False
+        """
+        path_length = np.sqrt(np.sum(np.power(state.q[:2] - goal_state.q[:2], 2.0)))
+
+        if path_length > self.MAX_PATH_LENGTH or path_length < self.MIN_PATH_LENGTH:
             return False
 
         # Allow straight path solutions for the easiest levels of difficulty.
         if self.difficulty > 0.25:
+            straight_path = self.model_wrapper.arange(
+                state, goal_state, self.delta_collision_check
+            )
+
             _, collide = self.stopping_configuration(straight_path)
             return collide.any()
+        else:
+            return True
 
 
 class MazeGoalObstaclesCurriculum(MazeGoal):
@@ -168,7 +195,6 @@ class MazeGoalObstaclesCurriculum(MazeGoal):
         self.difficulty = curriculum_difficulty
         self.HARD_MAX_OBSTACLES = grid_size ** 2.0
         self.MAX_OBSTACLES = int(self.difficulty * self.HARD_MAX_OBSTACLES)
-
 
     def validate_sample(self, state, goal_state):
         "Filter start and goal with straight path solution"
@@ -182,7 +208,6 @@ class MazeGoalObstaclesCurriculum(MazeGoal):
 
         _, collide = self.stopping_configuration(straight_path)
         return collide.any()
-
 
     def get_obstacles_geoms(self, idx_env):
         np_random = self._np_random

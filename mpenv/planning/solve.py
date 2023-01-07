@@ -37,7 +37,7 @@ def solve(env, delta_growth, iterations, simplify):
             q1 = interpolate_fn(q0, q1, t1)
         path = arange_fn(q0, q1, delta_collision_check)
         q_stop, collide = env.stopping_configuration(path)
-        return q_stop, not collide
+        return q_stop, not collide.any()
 
     def close_fn(qw0, qw1):
         return np.allclose(qw0.q, qw1.q)

@@ -17,6 +17,7 @@ from mpenv.core.visualizer import Visualizer
 from mpenv.core.o3d_visualizer import Open3DVisualizer
 
 from mpenv.core.mesh import Mesh
+from mpenv.planning import solve
 
 from mpenv.robot.freeflyer import FreeFlyer
 

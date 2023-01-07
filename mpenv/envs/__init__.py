@@ -221,7 +221,7 @@ register(
 register(
     id=f"Maze-Simple-DistanceCurriculum-v0",
     entry_point="mpenv.envs.maze:maze_edges_distance_curriculum",
-    kwargs={"grid_size": 3},
+    kwargs={"grid_size": 5},
 )
 register(
     id=f"Maze-Simple-ObstaclesCurriculum-v0",
