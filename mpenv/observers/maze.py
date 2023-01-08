@@ -22,8 +22,8 @@ class MazeObserver(BaseObserver):
         # update observation definition to add the obstacles representation
         self.add_observation("obstacles", self.obstacles_dim)
 
-    def reset(self):
-        o = self.env.reset()
+    def reset(self, **kwargs):
+        o = self.env.reset(**kwargs)
         edges = []
         geom_objs = self.env.geoms.geom_objs
         for i, obst in enumerate(geom_objs):

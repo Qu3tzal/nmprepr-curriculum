@@ -140,17 +140,12 @@ class MazeGoal(Base):
 
 
 class MazeGoalDistanceCurriculum(MazeGoal):
-    def __init__(self, grid_size, curriculum_difficulty):
-        super().__init__(grid_size)
-
+    def _reset(self, idx_env=None, start=None, goal=None, curriculum_difficulty=1.0):
         self.difficulty = curriculum_difficulty
         self.MAX_PATH_LENGTH = max(self.difficulty * np.sqrt(2), 0.2)
         self.MIN_PATH_LENGTH = max(self.difficulty / 2.0, 0.0) * np.sqrt(2)
-        print("Difficulty is: {diff}, max path length is: {max_path}, min path length is: {min_path}".format(
-            diff=self.difficulty,
-            max_path=self.MAX_PATH_LENGTH,
-            min_path=self.MIN_PATH_LENGTH
-        ))
+        kwargs = {"idx_env": idx_env, "start": start, "goal": goal}
+        return super(MazeGoalDistanceCurriculum, self)._reset(**kwargs)
 
     def validate_sample(self, state, goal_state):
         "Filter start and goal with straight path solution"
@@ -189,12 +184,12 @@ class MazeGoalDistanceCurriculum(MazeGoal):
 
 
 class MazeGoalObstaclesCurriculum(MazeGoal):
-    def __init__(self, grid_size, curriculum_difficulty):
-        super().__init__(grid_size)
-
+    def _reset(self, idx_env=None, start=None, goal=None, curriculum_difficulty=1.0):
         self.difficulty = curriculum_difficulty
-        self.HARD_MAX_OBSTACLES = grid_size ** 2.0
+        self.HARD_MAX_OBSTACLES = self.grid_size ** 2.0
         self.MAX_OBSTACLES = int(self.difficulty * self.HARD_MAX_OBSTACLES)
+        kwargs = {"idx_env": idx_env, "start": start, "goal": goal}
+        return super(MazeGoalObstaclesCurriculum, self)._reset(**kwargs)
 
     def validate_sample(self, state, goal_state):
         "Filter start and goal with straight path solution"
@@ -290,16 +285,16 @@ def maze_edges(grid_size):
     return env
 
 
-def maze_edges_distance_curriculum(grid_size, curriculum_difficulty):
-    env = MazeGoalDistanceCurriculum(grid_size, curriculum_difficulty)
+def maze_edges_distance_curriculum(grid_size):
+    env = MazeGoalDistanceCurriculum(grid_size)
     env = MazeObserver(env)
     coordinate_frame = "local"
     env = RobotLinksObserver(env, coordinate_frame)
     return env
 
 
-def maze_edges_obstacles_curriculum(grid_size, curriculum_difficulty):
-    env = MazeGoalObstaclesCurriculum(grid_size, curriculum_difficulty)
+def maze_edges_obstacles_curriculum(grid_size):
+    env = MazeGoalObstaclesCurriculum(grid_size)
     env = MazeObserver(env)
     coordinate_frame = "local"
     env = RobotLinksObserver(env, coordinate_frame)

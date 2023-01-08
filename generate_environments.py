@@ -4,33 +4,31 @@ import matplotlib.pyplot as plt
 
 
 def generate_curriculum_environments(env_name):
-    print("Creating the environments for {}...".format(env_name))
-    easy_curriculum_env = gym.make(env_name, curriculum_difficulty=0.0)
-    medium_curriculum_env = gym.make(env_name, curriculum_difficulty=0.5)
-    hard_curriculum_env = gym.make(env_name, curriculum_difficulty=1.0)
+    print("Creating the environment for {}...".format(env_name))
+    curriculum_env = gym.make(env_name)
 
     # Sample different instances.
     k = 3
     print("Sampling {} instances...".format(k))
     for i in range(k):
-        easy_curriculum_env.reset()
-        easy_curriculum_env.render()
+        curriculum_env.reset(curriculum_difficulty=0.0)
+        curriculum_env.render()
         plt.savefig("{}-easy-{}.png".format(env_name, i))
 
     # Sample different instances.
     k = 3
     print("Sampling {} instances...".format(k))
     for i in range(k):
-        medium_curriculum_env.reset()
-        medium_curriculum_env.render()
+        curriculum_env.reset(curriculum_difficulty=0.5)
+        curriculum_env.render()
         plt.savefig("{}-medium-{}.png".format(env_name, i))
 
     # Sample different instances.
     k = 3
     print("Sampling {} instances...".format(k))
     for i in range(k):
-        hard_curriculum_env.reset()
-        hard_curriculum_env.render()
+        curriculum_env.reset(curriculum_difficulty=1.0)
+        curriculum_env.render()
         plt.savefig("{}-hard-{}.png".format(env_name, i))
 
 
