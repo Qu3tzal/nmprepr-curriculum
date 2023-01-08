@@ -17,6 +17,7 @@ from rlkit.torch.torch_rl_algorithm import TorchBatchRLAlgorithm
 
 
 from nmp.launcher import utils
+from nmp.launcher.custom_path_collector import CurriculumGoalConditionedPathCollector
 
 
 def get_replay_buffer(variant, expl_env):
@@ -74,14 +75,14 @@ def get_path_collector(variant, expl_env, eval_env, policy, eval_policy):
         expl_path_collector = MdpPathCollector(expl_env, policy)
         eval_path_collector = MdpPathCollector(eval_env, eval_policy)
     elif mode == "her":
-        expl_path_collector = GoalConditionedPathCollector(
+        expl_path_collector = CurriculumGoalConditionedPathCollector(
             expl_env,
             policy,
             observation_key=variant["her"]["observation_key"],
             desired_goal_key=variant["her"]["desired_goal_key"],
             representation_goal_key=variant["her"]["representation_goal_key"],
         )
-        eval_path_collector = GoalConditionedPathCollector(
+        eval_path_collector = CurriculumGoalConditionedPathCollector(
             eval_env,
             eval_policy,
             observation_key=variant["her"]["observation_key"],
