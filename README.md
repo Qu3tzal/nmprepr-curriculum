@@ -1,4 +1,6 @@
-# Learning Obstacle Representations for Neural Motion Planning
+# Adding Curriculum Learning to Learning Obstacle Representations for Neural Motion Planning
+
+Maxime Alvarez for Curriculum Learning additions.
 
 Robin Strudel, Ricardo Garcia, Justin Carpentier, Jean-Paul Laumond, Ivan Laptev, Cordelia Schmid\
 CoRL 2020
